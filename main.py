@@ -1,5 +1,6 @@
 import pygame   
 import sys
+import random
 
 pygame.init()   #初始化pygame
 screen = pygame.display.set_mode((480, 700))    #创建窗口
@@ -11,7 +12,11 @@ player = pygame.Rect(220,600,40,60) #玩家飞机
 clock = pygame.time.Clock()  #限速器：把游戏固定在每秒60帧
 BULLET_SPEED = 8  #子弹移动速度
 bullets = []  #子弹列表
+ENEMY_SPEED = 3  #敌机移动速度
+enemies = []  #敌机列表
+frame_count = 0  #帧计数器
 
+#=========================游戏主循环=========================
 running = True  #开关
 
 while running:  #循环控制开关，开着的时候进入循环，点击关闭按钮，开关变为False，循环结束
@@ -43,11 +48,26 @@ while running:  #循环控制开关，开着的时候进入循环，点击关闭
         if bullet.y + bullet.height < 0:  #子弹飞出屏幕？
             bullets.remove(bullet)  #从子弹列表中移除
 
+#敌机生成
+    frame_count += 1
+    if frame_count % 60 == 0:  #每60帧生成一个敌机
+        ex = random.randint(0, screen.get_width() - 50)  #敌机随机x坐标,-50保证完全在屏幕内
+        new_enemy = pygame.Rect(ex, -40, 50, 40)  #敌机矩形，从屏幕上方进入
+        enemies.append(new_enemy)  #把新敌机加入敌机列表
+
+#敌机移动
+    for enemy in enemies[:]:  #遍历敌机列表的副本
+        enemy.y += ENEMY_SPEED  #敌机向下移动
+        if enemy.y > screen.get_height():  #敌机飞出屏幕？
+            enemies.remove(enemy)  #从敌机列表中移除
+
 #绘制背景
     screen.fill((20,20,50)) #填充背景颜色
     pygame.draw.rect(screen, (0,255,0), player)  #绘制玩家飞机
     for bullet in bullets:
         pygame.draw.rect(screen, (255,255,0), bullet)  #绘制子弹
+    for enemy in enemies:
+        pygame.draw.rect(screen, (255,0,0), enemy)  #绘制敌机
     pygame.display.flip()  #更新屏幕显示
 
 #帧率控制

@@ -15,6 +15,8 @@ bullets = []  #子弹列表
 ENEMY_SPEED = 3  #敌机移动速度
 enemies = []  #敌机列表
 frame_count = 0  #帧计数器
+score = 0  #分数计数器
+font = pygame.font.SysFont(None, 36)  #字体对象
 
 #=========================游戏主循环=========================
 running = True  #开关
@@ -61,6 +63,15 @@ while running:  #循环控制开关，开着的时候进入循环，点击关闭
         if enemy.y > screen.get_height():  #敌机飞出屏幕？
             enemies.remove(enemy)  #从敌机列表中移除
 
+#碰撞检测
+    for bullet in bullets[:]:  #遍历子弹列表的副本
+        for enemy in enemies[:]:  #遍历敌机列表的副本
+            if bullet.colliderect(enemy):  #子弹与敌机碰撞？
+                bullets.remove(bullet)  #移除子弹
+                enemies.remove(enemy)  #移除敌机
+                score += 1  #分数加1
+                break
+
 #绘制背景
     screen.fill((20,20,50)) #填充背景颜色
     pygame.draw.rect(screen, (0,255,0), player)  #绘制玩家飞机
@@ -68,6 +79,8 @@ while running:  #循环控制开关，开着的时候进入循环，点击关闭
         pygame.draw.rect(screen, (255,255,0), bullet)  #绘制子弹
     for enemy in enemies:
         pygame.draw.rect(screen, (255,0,0), enemy)  #绘制敌机
+    score_img = font.render(f"Score: {score}", True, (255,255,255))  #渲染分数文本
+    screen.blit(score_img, (10, 10))  #绘制分数文本
     pygame.display.flip()  #更新屏幕显示
 
 #帧率控制

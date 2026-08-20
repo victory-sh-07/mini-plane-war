@@ -17,60 +17,79 @@ enemies = []  #敌机列表
 frame_count = 0  #帧计数器
 score = 0  #分数计数器
 font = pygame.font.SysFont(None, 36)  #字体对象
+big_font = pygame.font.SysFont(None, 72)  #大字体对象显示GAME OVER
+game_over = False  #游戏结束标志
 
 #=========================游戏主循环=========================
 running = True  #开关
 
 while running:  #循环控制开关，开着的时候进入循环，点击关闭按钮，开关变为False，循环结束
     for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            print("KEY:", event.key, " over:", game_over) 
         if event.type == pygame.QUIT:
             running = False
 
+#游戏结束后，按R重开
+        if game_over and event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+            bullets.clear()  #清空子弹列表
+            enemies.clear()  #清空敌机列表
+            score = 0  #分数归零
+            frame_count = 0  #帧计数器归零
+            player.x = 220  #玩家飞机位置归中
+            game_over = False  #游戏结束标志归False，重新开始游戏
+
 #子弹发射
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:  #按下空格键
+        if not game_over and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:  #按下空格键
             new_bullet = pygame.Rect(player.x + player.width // 2 - 2,player.y - 10, 4, 10)
             bullets.append(new_bullet)  #把新子弹加入子弹列表
+#闸门
+    if not game_over:
     
 #键盘移动
-    keys = pygame.key.get_pressed()  #获取键盘按键状态
-    if keys[pygame.K_LEFT]: #左方向键正被按住
-        player.x -= SPEED   #飞机向左移动
-    if keys[pygame.K_RIGHT]:    # 右方向键正被按住
-        player.x += SPEED   #飞机向右移动
+        keys = pygame.key.get_pressed()  #获取键盘按键状态
+        if keys[pygame.K_LEFT]: #左方向键正被按住
+            player.x -= SPEED   #飞机向左移动
+        if keys[pygame.K_RIGHT]:    # 右方向键正被按住
+            player.x += SPEED   #飞机向右移动
 
 #边界保护
-    if player.x < 0:   #左边缘越界？
-        player.x = 0   #按回最左边
-    if player.x + player.width > screen.get_width():  #右边缘越界？
-        player.x = screen.get_width() - player.width  #按回最右边
+        if player.x < 0:   #左边缘越界？
+            player.x = 0   #按回最左边
+        if player.x + player.width > screen.get_width():  #右边缘越界？
+            player.x = screen.get_width() - player.width  #按回最右边
 
 #子弹移动
-    for bullet in bullets[:]:  #遍历子弹列表的副本
-        bullet.y -= BULLET_SPEED  #子弹向上移动
-        if bullet.y + bullet.height < 0:  #子弹飞出屏幕？
-            bullets.remove(bullet)  #从子弹列表中移除
+        for bullet in bullets[:]:  #遍历子弹列表的副本
+            bullet.y -= BULLET_SPEED  #子弹向上移动
+            if bullet.y + bullet.height < 0:  #子弹飞出屏幕？
+                bullets.remove(bullet)  #从子弹列表中移除
 
 #敌机生成
-    frame_count += 1
-    if frame_count % 60 == 0:  #每60帧生成一个敌机
-        ex = random.randint(0, screen.get_width() - 50)  #敌机随机x坐标,-50保证完全在屏幕内
-        new_enemy = pygame.Rect(ex, -40, 50, 40)  #敌机矩形，从屏幕上方进入
-        enemies.append(new_enemy)  #把新敌机加入敌机列表
+        frame_count += 1
+        if frame_count % 60 == 0:  #每60帧生成一个敌机
+            ex = random.randint(0, screen.get_width() - 50)  #敌机随机x坐标,-50保证完全在屏幕内
+            new_enemy = pygame.Rect(ex, -40, 50, 40)  #敌机矩形，从屏幕上方进入
+            enemies.append(new_enemy)  #把新敌机加入敌机列表
 
 #敌机移动
-    for enemy in enemies[:]:  #遍历敌机列表的副本
-        enemy.y += ENEMY_SPEED  #敌机向下移动
-        if enemy.y > screen.get_height():  #敌机飞出屏幕？
-            enemies.remove(enemy)  #从敌机列表中移除
+        for enemy in enemies[:]:  #遍历敌机列表的副本
+            enemy.y += ENEMY_SPEED  #敌机向下移动
+            if enemy.y > screen.get_height():  #敌机飞出屏幕？
+                enemies.remove(enemy)  #从敌机列表中移除
 
 #碰撞检测
-    for bullet in bullets[:]:  #遍历子弹列表的副本
+        for bullet in bullets[:]:  #遍历子弹列表的副本
+            for enemy in enemies[:]:  #遍历敌机列表的副本
+                if bullet.colliderect(enemy):  #子弹与敌机碰撞？
+                    bullets.remove(bullet)  #移除子弹
+                    enemies.remove(enemy)  #移除敌机
+                    score += 1  #分数加1
+                    break
+#玩家与敌机碰撞检测
         for enemy in enemies[:]:  #遍历敌机列表的副本
-            if bullet.colliderect(enemy):  #子弹与敌机碰撞？
-                bullets.remove(bullet)  #移除子弹
-                enemies.remove(enemy)  #移除敌机
-                score += 1  #分数加1
-                break
+            if player.colliderect(enemy):  #玩家与敌机碰撞？
+                game_over = True  #游戏结束标志设为True
 
 #绘制背景
     screen.fill((20,20,50)) #填充背景颜色
@@ -81,6 +100,12 @@ while running:  #循环控制开关，开着的时候进入循环，点击关闭
         pygame.draw.rect(screen, (255,0,0), enemy)  #绘制敌机
     score_img = font.render(f"Score: {score}", True, (255,255,255))  #渲染分数文本
     screen.blit(score_img, (10, 10))  #绘制分数文本
+
+    if game_over:  #游戏结束？
+        over_img = big_font.render("GAME OVER", True, (255, 0, 0))  #渲染游戏结束文本
+        screen.blit(over_img, over_img.get_rect(center=(240, 320)))  #绘制游戏结束文本
+        tip_img = font.render("Press R to Restart", True, (255, 255, 255))  #渲染提示文本
+        screen.blit(tip_img, tip_img.get_rect(center=(240, 380)))  #绘制提示文本
     pygame.display.flip()  #更新屏幕显示
 
 #帧率控制

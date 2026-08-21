@@ -20,13 +20,18 @@ font = pygame.font.SysFont(None, 36)  #字体对象
 big_font = pygame.font.SysFont(None, 72)  #大字体对象显示GAME OVER
 game_over = False  #游戏结束标志
 
+#读取历史最高分
+try:
+    with open("high_score.txt", "r") as f: #"r"=read 读模式；with语句会自动关闭文件
+        high_score = int(f.read())  #read()读取文件内容，int()转换为整数
+except FileNotFoundError:
+    high_score = 0  #第一次无存档，兜底为0
+
 #=========================游戏主循环=========================
 running = True  #开关
 
 while running:  #循环控制开关，开着的时候进入循环，点击关闭按钮，开关变为False，循环结束
     for event in pygame.event.get():
-        if event.type == pygame.KEYDOWN:
-            print("KEY:", event.key, " over:", game_over) 
         if event.type == pygame.QUIT:
             running = False
 
@@ -90,6 +95,11 @@ while running:  #循环控制开关，开着的时候进入循环，点击关闭
         for enemy in enemies[:]:  #遍历敌机列表的副本
             if player.colliderect(enemy):  #玩家与敌机碰撞？
                 game_over = True  #游戏结束标志设为True
+#存档
+            if score > high_score:  #当前分数大于历史最高分？
+                high_score = score  #更新历史最高分
+                with open("high_score.txt", "w") as f:  #"w"=write 写模式
+                    f.write(str(high_score))  #写入历史最高分
 
 #绘制背景
     screen.fill((20,20,50)) #填充背景颜色
@@ -106,6 +116,8 @@ while running:  #循环控制开关，开着的时候进入循环，点击关闭
         screen.blit(over_img, over_img.get_rect(center=(240, 320)))  #绘制游戏结束文本
         tip_img = font.render("Press R to Restart", True, (255, 255, 255))  #渲染提示文本
         screen.blit(tip_img, tip_img.get_rect(center=(240, 380)))  #绘制提示文本
+        high_img = font.render(f"High:{high_score}", True, (255, 255, 0))  #渲染历史最高分文本
+        screen.blit(high_img,(10, 50))  #绘制历史最高分文本
     pygame.display.flip()  #更新屏幕显示
 
 #帧率控制
